@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EL — AI Video Generator</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a2d;--text:#f5f7ff;--muted:#a9b4ce;--accent:#8b7cff;--line:#2a3652}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top right,#1c2850 0,#0b1020 45%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:20px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;gap:12px;align-items:center}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#a49aff,#5c50df);display:grid;place-items:center;font-size:23px;font-weight:900}h1{font-size:20px;margin:0}.sub,.muted,.note{color:var(--muted);font-size:12px}.pill{border:1px solid #4d477e;background:#29244a;color:#dcd8ff;padding:6px 10px;border-radius:999px;font-size:12px}
+main{max-width:1050px;margin:auto;padding:26px 16px 60px}.hero{margin-bottom:20px}.hero h2{font-size:clamp(25px,4vw,38px);line-height:1.12;margin:0 0 10px}.hero p{color:var(--muted);max-width:720px;margin:0}.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:linear-gradient(180deg,#151e33,#11182a);border:1px solid var(--line);border-radius:18px;padding:19px;min-width:0}.card h3{margin:0 0 12px}label{display:block;font-weight:650;margin:14px 0 7px}input,textarea,select{width:100%;background:#0b1223;border:1px solid #34415f;border-radius:10px;padding:12px;color:var(--text);font:inherit}textarea{resize:vertical;min-height:115px}select:focus,textarea:focus,input:focus{outline:2px solid #7166ef}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:11px;background:linear-gradient(135deg,#9b8cff,#6b5cf0);color:white;font-weight:750;padding:12px 16px;font:inherit;cursor:pointer}.btn.secondary{background:#202b45;border:1px solid #3a4867}.btn:disabled{opacity:.45}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.status{padding:12px;border-radius:10px;background:#0b1223;border:1px solid var(--line);color:var(--muted);margin:12px 0;white-space:pre-wrap}.status.good{color:#75e0b7;border-color:#286e58}.output{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;background:#0b1223;border:1px solid var(--line);padding:14px;border-radius:12px;min-height:180px}.note{margin-top:10px}.small{font-size:12px;color:var(--muted)}footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.two{grid-template-columns:1fr}header{align-items:flex-start}.card{padding:15px}}
+</style></head>
+<body>
+<header><div class="brand"><div class="logo">EL</div><div><h1>EL AI Video Generator</h1><div class="sub">Your personal video studio</div></div></div><span class="pill">Prototype v0.2</span></header>
+<main>
+<section class="hero"><h2>Give your idea a story.</h2><p>EL now has a server endpoint for real text-AI generation once you add your provider token securely. This step creates the script and production plan—not the rendered video yet.</p></section>
+<div class="layout">
+<section class="card"><h3>① Create your video plan</h3>
+<label for="project">Project name</label><input id="project" value="My first EL video" maxlength="80">
+<label for="idea">Video idea</label><textarea id="idea" placeholder="Example: A little rabbit discovers a magical garden and learns to be brave."></textarea>
+<div class="two"><div><label for="style">Visual style</label><select id="style"><option>3D cartoon</option><option>2D cartoon</option><option>Anime</option><option>Realistic cinematic</option><option>Educational explainer</option></select></div>
+<div><label for="length">Target length</label><select id="length"><option value="2">2 minutes</option><option value="5" selected>5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option></select></div></div>
+<label for="voice">Narration style</label><select id="voice"><option>Warm storyteller</option><option>Energetic</option><option>Calm and gentle</option><option>Character dialogue</option></select>
+<div class="actions"><button class="btn" id="generate">Generate with AI</button><button class="btn secondary" id="health">Check connection</button></div>
+<p class="note">Your secret token is never entered here. It belongs in your server's environment settings.</p></section>
+<section class="card"><h3>② AI production plan</h3><div id="status" class="status">Checking EL server…</div><div id="output" class="output">Your generated script and scene prompts will appear here.</div>
+<div class="actions"><button class="btn secondary" id="copy" disabled>Copy plan</button><button class="btn secondary" id="download" disabled>Download .txt</button></div>
+<p class="note">Next: connect video generation, AI voice, then render scenes into an MP4.</p></section></div>
+<footer>EL · Keep API tokens private · Video generation providers may charge fees or have usage limits.</footer></main>
+<script>
+const $=id=>document.getElementById(id);let latest="";
+async function checkHealth(){try{const r=await fetch("/api/health");const d=await r.json();$("status").className="status good";$("status").textContent=d.textAIConfigured?"Server online. Text AI token is configured.":"Server online, but text AI is not configured. Add HF_TOKEN to the server environment."; }catch(e){$("status").className="status";$("status").textContent="Could not reach EL's server. Open this app through the deployed server, not as a local file."}}
+$("health").onclick=checkHealth;
+$("generate").onclick=async()=>{const idea=$("idea").value.trim();if(idea.length<5){$("status").textContent="Please enter a video idea with at least 5 characters.";return}
+$("generate").disabled=true;$("status").className="status";$("status").textContent="EL is asking the AI to write your script and scene plan…";$("output").textContent="";
+try{const r=await fetch("/api/story-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idea,style:$("style").value,minutes:Number($("length").value),voice:$("voice").value,project:$("project").value})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Generation failed.");latest=`EL AI VIDEO PLAN\nProject: ${$("project").value}\nStyle: ${$("style").value}\nDuration target: ${$("length").value} minutes\n\n${d.plan}`;$("output").textContent=d.plan;$("status").className="status good";$("status").textContent="AI plan generated successfully using "+d.model;$("copy").disabled=false;$("download").disabled=false}
+catch(e){$("status").className="status";$("status").textContent=e.message;$("output").textContent="Once the server token and model access are configured, the AI result will appear here."}
+finally{$("generate").disabled=false}};
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText(latest);$("status").textContent="Plan copied."}catch(e){$("status").textContent="Clipboard access unavailable; download the text file instead."}};
+$("download").onclick=()=>{const b=new Blob([latest],{type:"text/plain;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="EL-video-plan.txt";a.click();URL.revokeObjectURL(a.href)};
+checkHealth();
+</script></body></html>
